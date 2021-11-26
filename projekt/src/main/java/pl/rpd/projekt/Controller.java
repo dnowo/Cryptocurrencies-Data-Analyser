@@ -15,21 +15,16 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.LinkedList;
 
 @RestController
 @RequiredArgsConstructor
 public class Controller {
 
     private final Producer producer;
-    private final CryptoRepository cryptoRepository;
 
     @PostMapping("/publish")
     public void produce() throws IOException, URISyntaxException {
-        producer.sendMsg(Sample.builder()
-                .id(18L)
-                .name("test")
-                .build());
-
         final CsvMapper mapper = new CsvMapper();
         final CsvSchema schema = mapper.schemaFor(Cryptocurrency.class).withHeader();
         File fileBitcoin = getFileResource("coin_Bitcoin.csv");
@@ -45,12 +40,9 @@ public class Controller {
                 .with(schema)
                 .readValues(fileDogecoin);
 
-        bitcoin.readAll().forEach(cryptoRepository::insert);
-        dogecoin.readAll().forEach(cryptoRepository::insert);
-
-//        cryptoRepository.select();
-
-//        cryptoRepository.insert(dto);
+        var cryptocurrencies = new LinkedList<Cryptocurrency>(bitcoin.readAll());
+        cryptocurrencies.addAll(dogecoin.readAll());
+        cryptocurrencies.forEach(producer::sendMsg);
     }
 
     private File getFileResource(final String filename) throws URISyntaxException {
