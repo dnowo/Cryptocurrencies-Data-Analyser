@@ -38,21 +38,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.13.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-annotations</artifactId>
-			<version>2.13.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-core</artifactId>
-			<version>2.13.0</version>
-		</dependency>
-		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-csv</artifactId>
 			<version>2.13.0</version>
@@ -68,6 +53,16 @@
 			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-sql_2.11</artifactId>
 			<version>2.4.8</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.codehaus.janino</groupId>
+					<artifactId>janino</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.codehaus.janino</groupId>
+					<artifactId>commons-compiler</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.datastax.spark</groupId>
@@ -80,6 +75,17 @@
 			<version>2.10.5.20201202</version>
 			<type>pom</type>
 			<scope>import</scope>
+		</dependency>
+
+		<dependency>
+			<artifactId>janino</artifactId>
+			<groupId>org.codehaus.janino</groupId>
+			<version>3.0.8</version>
+		</dependency>
+		<dependency>
+			<artifactId>commons-compiler</artifactId>
+			<groupId>org.codehaus.janino</groupId>
+			<version>3.0.8</version>
 		</dependency>
 
 		<dependency>
