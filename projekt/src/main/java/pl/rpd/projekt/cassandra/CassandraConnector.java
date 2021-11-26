@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class CassandraConnector {
-    private Cluster cluster;
 
+    private Cluster cluster;
     private Session session;
 
     public void connect(String node, Integer port) {

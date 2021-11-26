@@ -13,6 +13,9 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static pl.rpd.projekt.Constants.CASSANDRA_HOST;
+import static pl.rpd.projekt.Constants.CASSANDRA_PORT;
+
 @Service
 @RequiredArgsConstructor
 public class CryptoRepository {
@@ -29,9 +32,7 @@ public class CryptoRepository {
     }
 
     private Session connect() {
-        final String host = "127.0.0.1";
-        final Integer port = 9042;
-        cassandraConnector.connect(host, port);
+        cassandraConnector.connect(CASSANDRA_HOST, CASSANDRA_PORT);
         cassandraConnector.createKeyspace(KEYSPACE, "SimpleStrategy", 1);
         this.session = cassandraConnector.getSession();
 

@@ -6,10 +6,9 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pl.rpd.projekt.cassandra.CryptoRepository;
 import pl.rpd.projekt.model.Cryptocurrency;
-import pl.rpd.projekt.model.Sample;
 import pl.rpd.projekt.producer.Producer;
+import pl.rpd.projekt.spark.ApacheSpark;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +21,7 @@ import java.util.LinkedList;
 public class Controller {
 
     private final Producer producer;
+    private final ApacheSpark spark;
 
     @PostMapping("/publish")
     public void produce() throws IOException, URISyntaxException {
@@ -42,7 +42,13 @@ public class Controller {
 
         var cryptocurrencies = new LinkedList<Cryptocurrency>(bitcoin.readAll());
         cryptocurrencies.addAll(dogecoin.readAll());
+
         cryptocurrencies.forEach(producer::sendMsg);
+    }
+
+    @PostMapping("/spark")
+    public void spark() {
+        spark.proceedData();
     }
 
     private File getFileResource(final String filename) throws URISyntaxException {
