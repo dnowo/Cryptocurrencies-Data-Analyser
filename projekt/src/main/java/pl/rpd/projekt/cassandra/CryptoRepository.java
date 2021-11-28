@@ -5,6 +5,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.springframework.stereotype.Service;
 import pl.rpd.projekt.model.Cryptocurrency;
 import pl.rpd.projekt.model.CryptocurrencyDto;
@@ -37,7 +38,7 @@ public class CryptoRepository {
         this.session = cassandraConnector.getSession();
 
         ResultSet result = session.execute("SELECT * FROM system_schema.keyspaces;");
-        var list = result.all().stream()
+        val list = result.all().stream()
                 .filter(r -> r.getString(0).equals(KEYSPACE.toLowerCase()))
                 .map(r -> r.getString(0))
                 .collect(Collectors.toList());

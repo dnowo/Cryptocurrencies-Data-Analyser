@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.rpd.projekt.model.Cryptocurrency;
@@ -40,7 +41,7 @@ public class Controller {
                 .with(schema)
                 .readValues(fileDogecoin);
 
-        var cryptocurrencies = new LinkedList<Cryptocurrency>(bitcoin.readAll());
+        val cryptocurrencies = new LinkedList<Cryptocurrency>(bitcoin.readAll());
         cryptocurrencies.addAll(dogecoin.readAll());
 
         cryptocurrencies.forEach(producer::sendMsg);

@@ -1,11 +1,19 @@
 package pl.rpd.projekt.spark;
 
+import jnr.ffi.annotations.In;
 import lombok.val;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.SequenceFileOutputFormat;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.sql.*;
 import org.springframework.stereotype.Component;
+import scala.Tuple2;
 
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
@@ -45,48 +53,43 @@ public class ApacheSpark {
                 .option("keyspace", "crypto")
                 .option("table", "cryptocurrencies")
                 .load();
-        Dataset<Row> dates = crypto.select("date", "open", "close").where("symbol = 'DOGE'");
-        Encoder<MiniCryptoDto> timestampEncoder = Encoders.bean(MiniCryptoDto.class);
-        Dataset<MiniCryptoDto> timestampDataset = dates.map((MapFunction<Row, MiniCryptoDto>) row -> {
-            var r = row.getTimestamp(0).toInstant();
+        Dataset<Row> cryptoObj = crypto.select("date", "open", "close").where("symbol = 'DOGE'");
+        Encoder<MiniCryptoDto> encoder = Encoders.bean(MiniCryptoDto.class);
+        Dataset<MiniCryptoDto> cryptoDataset = cryptoObj.map((MapFunction<Row, MiniCryptoDto>) row -> {
+            val r = row.getTimestamp(0).toInstant();
             if (r.isAfter(Instant.now().minus(365, ChronoUnit.DAYS))) {
                 val mcdto = new MiniCryptoDto();
                 mcdto.setOpen(row.getDecimal(1));
                 mcdto.setClose(row.getDecimal(2));
                 mcdto.setDate(Timestamp.from(r));
+                mcdto.setDifference(mcdto.getClose().subtract(mcdto.getOpen()).abs());
                 return mcdto;
             }
             return null;
-        }, timestampEncoder).filter(obj -> obj.getDate() != null);
-        timestampDataset.show(30, false);
-        JavaRDD<MiniCryptoDto> timestamps = timestampDataset.javaRDD();
-        //zapisać jako para i posortować po datach, ewentualnie reduceByKey i po miesiącach zredukować
+        }, encoder).filter(obj -> obj.getDate() != null);
+        cryptoDataset.show(30, false);
 
+        Encoder<Integer> encoderTimestamp = Encoders.INT();
+        Dataset<Integer> datasetTimestamp = cryptoDataset.select("date").map((MapFunction<Row, Integer>) row -> {
+            return Integer.parseInt("" + (row.getTimestamp(0).getTime() / 1000));
+        }, encoderTimestamp);
 
-//        lines.flatMap(line -> {
-//            String[] data = COMMA.split(line);
-//            List<String> results = new ArrayList<>();
-//
-//            String id = data[1];
-//            String name = data[2];
-//            results.add(id + " " + name);
-//            return results;
-//        });
-//
-//        JavaRDD<Integer> amount = lines.flatMap(line -> {
-//            String[] data = COMMA.split(line);
-//            List<Integer> results = new ArrayList<>();
-//
-//            int returnAmount = Integer.parseInt(data[2]);
-//            results.add(returnAmount);
-//            return results;
-//        });
-//        JavaPairRDD<String, Integer> idNameWithAmount = idWithNameConcatenated.zip(amount);
-//        idWithNameConcatenated.collect();
-//        JavaPairRDD<String, Integer> counts = idNameWithAmount.reduceByKey(Integer::sum);
-//        JavaPairRDD<String, Integer> sorted = counts.sortByKey();
-//
-//        sorted.coalesce(1).saveAsHadoopFile(outputPath, Text.class, IntWritable.class, SequenceFileOutputFormat.class);
-//        sc.stop();
+        Encoder<Integer> encoderDiff = Encoders.INT();
+        Dataset<Integer> datasetDiff = cryptoDataset.select("difference").map((MapFunction<Row, Integer>) row -> {
+            return row.getDecimal(0).intValue();
+        }, encoderDiff);
+
+        JavaRDD<Integer> dates = datasetTimestamp.javaRDD();
+        JavaRDD<Integer> differences = datasetDiff.javaRDD();
+        JavaPairRDD<Integer, Integer> datesDifferencesPair = dates.zip(differences).sortByKey();
+        JavaPairRDD<IntWritable, IntWritable> datesDifferencesPairWritable = datesDifferencesPair.mapToPair(new ConvertToWritableTypes());
+        datesDifferencesPairWritable.coalesce(1).saveAsHadoopFile("HDFS", IntWritable.class, IntWritable.class, SequenceFileOutputFormat.class);
+        sparkSession.stop();
+    }
+
+    public static class ConvertToWritableTypes implements PairFunction<Tuple2<Integer, Integer>, IntWritable, IntWritable> {
+        public Tuple2<IntWritable, IntWritable> call(Tuple2<Integer, Integer> record) {
+            return new Tuple2(new IntWritable(record._1), new IntWritable(record._2));
+        }
     }
 }

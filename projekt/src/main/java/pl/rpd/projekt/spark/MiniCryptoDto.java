@@ -14,4 +14,5 @@ public class MiniCryptoDto {
     private Timestamp date;
     private BigDecimal open;
     private BigDecimal close;
+    private BigDecimal difference;
 }
