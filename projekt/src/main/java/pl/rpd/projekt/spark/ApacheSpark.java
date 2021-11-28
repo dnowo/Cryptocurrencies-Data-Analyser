@@ -1,17 +1,18 @@
 package pl.rpd.projekt.spark;
 
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.sql.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static pl.rpd.projekt.Constants.*;
 
@@ -36,17 +37,26 @@ public class ApacheSpark {
     }
 
     public void proceedData() {
-        Dataset<Row> empDeptDataSet = sparkSession.read()
+        Dataset<Row> crypto = sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
                 .option("keyspace", "crypto")
                 .option("table", "cryptocurrencies")
                 .load();
+        Dataset<Row> dates = crypto.select("date");
+        Encoder<Timestamp> timestampEncoder = Encoders.TIMESTAMP();
+        Dataset<Timestamp> timestampDataset = dates.map((MapFunction<Row, Timestamp>) row -> {
+            var r = row.getTimestamp(0).toInstant();
+            if (r.isAfter(Instant.now().minus(365, ChronoUnit.DAYS))) {
+                return Timestamp.from(r);
+            }
+            return null;
+        }, timestampEncoder).filter(Objects::nonNull);
+        timestampDataset.show(30, false);
 
-        empDeptDataSet.select("volume").show(100);
+        JavaRDD<Timestamp> timestamps = timestampDataset.javaRDD();
 
-// Example jakies cos nie wiem jeszcze po co
 
-//        JavaRDD<String> idWithNameConcatenated = lines.flatMap(line -> {
+//        lines.flatMap(line -> {
 //            String[] data = COMMA.split(line);
 //            List<String> results = new ArrayList<>();
 //
