@@ -13,6 +13,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -58,8 +59,8 @@ public class ApacheSpark {
             return null;
         }, timestampEncoder).filter(obj -> obj.getDate() != null);
         timestampDataset.show(30, false);
-
         JavaRDD<MiniCryptoDto> timestamps = timestampDataset.javaRDD();
+        //zapisać jako para i posortować po datach, ewentualnie reduceByKey i po miesiącach zredukować
 
 
 //        lines.flatMap(line -> {
