@@ -1,5 +1,6 @@
 package pl.rpd.projekt.spark;
 
+import lombok.val;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.MapFunction;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -42,18 +44,22 @@ public class ApacheSpark {
                 .option("keyspace", "crypto")
                 .option("table", "cryptocurrencies")
                 .load();
-        Dataset<Row> dates = crypto.select("date");
-        Encoder<Timestamp> timestampEncoder = Encoders.TIMESTAMP();
-        Dataset<Timestamp> timestampDataset = dates.map((MapFunction<Row, Timestamp>) row -> {
+        Dataset<Row> dates = crypto.select("date", "open", "close").where("symbol = 'DOGE'");
+        Encoder<MiniCryptoDto> timestampEncoder = Encoders.bean(MiniCryptoDto.class);
+        Dataset<MiniCryptoDto> timestampDataset = dates.map((MapFunction<Row, MiniCryptoDto>) row -> {
             var r = row.getTimestamp(0).toInstant();
             if (r.isAfter(Instant.now().minus(365, ChronoUnit.DAYS))) {
-                return Timestamp.from(r);
+                val mcdto = new MiniCryptoDto();
+                mcdto.setOpen(row.getDecimal(1));
+                mcdto.setClose(row.getDecimal(2));
+                mcdto.setDate(Timestamp.from(r));
+                return mcdto;
             }
             return null;
-        }, timestampEncoder).filter(Objects::nonNull);
+        }, timestampEncoder).filter(obj -> obj.getDate() != null);
         timestampDataset.show(30, false);
 
-        JavaRDD<Timestamp> timestamps = timestampDataset.javaRDD();
+        JavaRDD<MiniCryptoDto> timestamps = timestampDataset.javaRDD();
 
 
 //        lines.flatMap(line -> {
