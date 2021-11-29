@@ -7,12 +7,14 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.sql.*;
+import org.apache.spark.sql.execution.datasources.text.TextFileFormat;
 import org.springframework.stereotype.Component;
 import scala.Tuple2;
 
@@ -82,7 +84,7 @@ public class ApacheSpark {
         JavaRDD<Double> differences = datasetDiff.javaRDD();
         JavaPairRDD<Integer, Double> datesDifferencesPair = dates.zip(differences).sortByKey();
         JavaPairRDD<IntWritable, DoubleWritable> datesDifferencesPairWritable = datesDifferencesPair.mapToPair(new ConvertToWritableTypes());
-        datesDifferencesPairWritable.coalesce(1).saveAsHadoopFile("hdfs://localhost:19000/sparkDX", IntWritable.class, DoubleWritable.class, SequenceFileOutputFormat.class);
+        datesDifferencesPairWritable.coalesce(1).saveAsHadoopFile("hdfs://localhost:19000/sparkInput", IntWritable.class, DoubleWritable.class, SequenceFileOutputFormat.class);
         sparkSession.stop();
     }
 

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pl.rpd.projekt.hadoop.ApacheHadoop;
 import pl.rpd.projekt.model.Cryptocurrency;
 import pl.rpd.projekt.producer.Producer;
 import pl.rpd.projekt.spark.ApacheSpark;
@@ -52,6 +53,11 @@ public class Controller {
         spark.proceedData();
     }
 
+    @PostMapping("/hadoop")
+    public void hadoop() throws Exception {
+        new ApacheHadoop().setup();
+    }
+
     private File getFileResource(final String filename) throws URISyntaxException {
         ClassLoader classLoader = getClass().getClassLoader();
         URL resource = classLoader.getResource(filename);
@@ -61,4 +67,6 @@ public class Controller {
             return new File(resource.toURI());
         }
     }
+
+
 }

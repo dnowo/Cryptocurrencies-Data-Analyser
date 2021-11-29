@@ -9,7 +9,7 @@ import java.util.TimeZone;
 public class ProjektApplication {
 
 	public static void main(String[] args) {
-		System.setProperty("hadoop.home.dir","C:\\Users\\root\\Desktop\\Hadoop");
+		System.setProperty("hadoop.home.dir","D:\\RPD\\hadoop\\hadoop-3.2.1");
 		SpringApplication.run(ProjektApplication.class, args);
 	}
 
