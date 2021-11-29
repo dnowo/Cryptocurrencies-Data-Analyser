@@ -2,6 +2,7 @@ package pl.rpd.projekt.spark;
 
 import jnr.ffi.annotations.In;
 import lombok.val;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 import org.apache.hadoop.io.LongWritable;
@@ -70,26 +71,24 @@ public class ApacheSpark {
         cryptoDataset.show(30, false);
 
         Encoder<Integer> encoderTimestamp = Encoders.INT();
-        Dataset<Integer> datasetTimestamp = cryptoDataset.select("date").map((MapFunction<Row, Integer>) row -> {
-            return Integer.parseInt("" + (row.getTimestamp(0).getTime() / 1000));
-        }, encoderTimestamp);
+        Dataset<Integer> datasetTimestamp = cryptoDataset.select("date")
+                .map((MapFunction<Row, Integer>) row -> Integer.parseInt("" + (row.getTimestamp(0).getTime() / 1000)), encoderTimestamp);
 
-        Encoder<Integer> encoderDiff = Encoders.INT();
-        Dataset<Integer> datasetDiff = cryptoDataset.select("difference").map((MapFunction<Row, Integer>) row -> {
-            return row.getDecimal(0).intValue();
-        }, encoderDiff);
+        Encoder<Double> encoderDiff = Encoders.DOUBLE();
+        Dataset<Double> datasetDiff = cryptoDataset.select("difference")
+                .map((MapFunction<Row, Double>) row -> Double.parseDouble("" + row.getDecimal(0)), encoderDiff);
 
         JavaRDD<Integer> dates = datasetTimestamp.javaRDD();
-        JavaRDD<Integer> differences = datasetDiff.javaRDD();
-        JavaPairRDD<Integer, Integer> datesDifferencesPair = dates.zip(differences).sortByKey();
-        JavaPairRDD<IntWritable, IntWritable> datesDifferencesPairWritable = datesDifferencesPair.mapToPair(new ConvertToWritableTypes());
-        datesDifferencesPairWritable.coalesce(1).saveAsHadoopFile("HDFS", IntWritable.class, IntWritable.class, SequenceFileOutputFormat.class);
+        JavaRDD<Double> differences = datasetDiff.javaRDD();
+        JavaPairRDD<Integer, Double> datesDifferencesPair = dates.zip(differences).sortByKey();
+        JavaPairRDD<IntWritable, DoubleWritable> datesDifferencesPairWritable = datesDifferencesPair.mapToPair(new ConvertToWritableTypes());
+        datesDifferencesPairWritable.coalesce(1).saveAsHadoopFile("hdfs://localhost:19000/sparkDX", IntWritable.class, DoubleWritable.class, SequenceFileOutputFormat.class);
         sparkSession.stop();
     }
 
-    public static class ConvertToWritableTypes implements PairFunction<Tuple2<Integer, Integer>, IntWritable, IntWritable> {
-        public Tuple2<IntWritable, IntWritable> call(Tuple2<Integer, Integer> record) {
-            return new Tuple2(new IntWritable(record._1), new IntWritable(record._2));
+    public static class ConvertToWritableTypes implements PairFunction<Tuple2<Integer, Double>, IntWritable, DoubleWritable> {
+        public Tuple2<IntWritable, DoubleWritable> call(Tuple2<Integer, Double> record) {
+            return new Tuple2(new IntWritable(record._1), new DoubleWritable(record._2));
         }
     }
 }
