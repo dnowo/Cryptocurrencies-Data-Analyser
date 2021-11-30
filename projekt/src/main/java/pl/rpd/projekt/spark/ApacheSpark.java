@@ -84,7 +84,7 @@ public class ApacheSpark {
         JavaRDD<Double> differences = datasetDiff.javaRDD();
         JavaPairRDD<Integer, Double> datesDifferencesPair = dates.zip(differences).sortByKey();
         JavaPairRDD<IntWritable, DoubleWritable> datesDifferencesPairWritable = datesDifferencesPair.mapToPair(new ConvertToWritableTypes());
-        datesDifferencesPairWritable.coalesce(1).saveAsHadoopFile("hdfs://localhost:19000/sparkInput", IntWritable.class, DoubleWritable.class, SequenceFileOutputFormat.class);
+        datesDifferencesPairWritable.coalesce(1).saveAsHadoopFile("hdfs://localhost:9000/sparkInput", IntWritable.class, DoubleWritable.class, TextOutputFormat.class);
         sparkSession.stop();
     }
 
