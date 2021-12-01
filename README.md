@@ -4,19 +4,22 @@ Project for data map-reduce cryptocurrency open/close amount by last year.
 # Programming lang
 - Java
 
-# Technologies used
+# Main technologies used
 - Docker,
 - Apache Kafka,
 - Cassandra NoSQL database,
 - Apache Spark,
 - Apache Hadoop,
-- MySQL SQL database.
-</br>
-also
-</br>
+- MySQL SQL database
+
+# Minor technologies used
 - Spring WEB,
-- CSVMapper.
+- CSVMapper,
+- Lombok.
 
 # Requirements to launch project
 - Installed Apache Hadoop locally,
-- Installed Docker.
+- Installed Docker,
+- Maybe XAMPP with MYSQ or added and configured in Dockerfile.
+
+Cheers!
