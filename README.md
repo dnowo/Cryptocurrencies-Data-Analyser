@@ -1,4 +1,4 @@
-# kafkaNoSQLSparkHadoop
+# Cryptocurrencies-Data-Analyser
 Project for data map-reduce cryptocurrency open/close amount by last year.
 
 # Programming lang
